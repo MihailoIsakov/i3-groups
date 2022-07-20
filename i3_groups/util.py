@@ -2,9 +2,13 @@ import i3
 import subprocess
 
 
-def rename_workspace(name):
-    command = f"i3-msg rename workspace to {name}"
+def rename_workspace(name=None):
+    if name is None: 
+        group = get_active_group()
+        workspace = get_text("Rename workspace")
+        name = group + ":" + workspace
 
+    command = f"i3-msg rename workspace to {name}"
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
@@ -82,7 +86,7 @@ def get_groups():
     return list(groups)
 
 
-def move_to_group():
+def move_workspace_to_group():
     workspace = get_focused_workspace_name()
 
     groups = get_groups()
@@ -125,19 +129,37 @@ def goto_next_workspace_in_group():
     focus_on_workspace(ws)
 
 
-def move_container_to_workspace(workspace: str):
-    command = f"i3-msg move container to workspace {workspace}"
+def move_container_to_workspace():
+    ws_names = [ws['name'] for ws in i3.get_workspaces()]
 
+    # sort by group
+    group = get_active_group()
+    l1, l2 = [], []
+    for ws in ws_names:
+        if group == ws[:len(group)]:
+            l1.append(ws)
+        else:
+            l2.append(ws)
+
+    ws_names = l1 + l2
+    
+    chosen_ws = get_option("Move to workspace", ws_names)
+
+    command = f"i3-msg move container to workspace {chosen_ws}"
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
 
 def change_group():
-    groups = get_groups()
-    chosen_group = get_option("Switch to group", groups).strip()
+    chosen_group = get_option("Work on group", get_groups())
 
-    monitors = [m for m in i3.get_outputs() if m['active']]
-    workspaces = i3.get_workspaces()
+    outputs = set([o['name'] for o in i3.get_outputs() if o['active']])
+
+    for ws in i3.get_workspaces():
+        if ws['output'] in outputs: 
+            if get_workspace_group(ws['name']) == chosen_group:
+                focus_on_workspace(ws['name'])
+                outputs.remove(ws['output'])
 
     
 

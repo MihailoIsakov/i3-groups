@@ -28,18 +28,21 @@ setuptools.setup(
         'Programming Language :: Python :: 3.10',
     ],
     keywords='i3 i3wm extensions add-ons',
-    packages=setuptools.find_packages(exclude=['tests']),
+    # packages=setuptools.find_packages(exclude=['tests']),
+    packages=['i3_groups'],
     install_requires=['i3-py ~= 0.6.4', ],
     extras_require={
         'dev': [
             'pytest ~= 7.1',
         ]
     },
-    scripts=[
-        'scripts/i3-rename-workspace.py',
-        'scripts/i3-assign-to-group.py',
-        'scripts/i3-next-in-group.py',
-        'scripts/i3-move-container-to-workspace.py',
-        'scripts/i3-change-group.py',
-    ],
+    entry_points={
+        'console_scripts': [
+            'move-ws-to-group     = i3_groups.util:move_workspace_to_group',
+            'next-ws-in-group     = i3_groups.util:goto_next_workspace_in_group',
+            'rename-workspace     = i3_groups.util:rename_workspace',
+            'move-container-to-ws = i3_groups.util:move_container_to_workspace',
+            'change-active-group  = i3_groups.util:change_group',
+        ]
+    }
 )
