@@ -16,9 +16,4 @@ Changing the group switches the workspace on all monitors to that group.
 `move-to-group.py`: moves the workspace to an existing group or creates a new one
 
 TODO:
- - [x] script for creating new groups
-    - [x] parse names to get list of groups
- - [x] script for renaming workspaces 
- - [x] script for moving workspace to group
- - [x] script for next / prev workspace on output 
- - [ ] script for changing groups
+- [ ] Allow canceling actions 
