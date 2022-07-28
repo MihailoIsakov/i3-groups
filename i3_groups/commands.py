@@ -1,5 +1,6 @@
 import subprocess
 import i3
+import argparse
 
 from .util import _bash
 from .workspace import Workspace, SHARED_GROUP, WSList
@@ -17,8 +18,12 @@ def move_workspace_to_group():
 
 
 def goto_next_workspace_in_group():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--prev', action='store_true', default=False) 
+    args = parser.parse_args()
+
     wsl = WSList()
-    wsl.next_ws(wsl.focused).focus_on()
+    wsl.next_ws(wsl.focused, args.prev).focus_on()
 
 
 def move_container_to_workspace():

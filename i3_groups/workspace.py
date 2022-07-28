@@ -141,14 +141,17 @@ class WSList():
         new_wsl._list = [w for w in new_wsl._list if w.output in output]
         return new_wsl 
 
-    def next_ws(self, curr: Workspace) -> Workspace:
+    def next_ws(self, curr: Workspace, prev=False) -> Workspace:
         """
         Returns the next workspace on the same monitor and in the same group.
         """
         wig = self.in_groups(self.active_groups).on_output(curr.output)
 
         pos = wig.index(curr)
-        next_pos = (pos + 1) % len(wig)
+        if not prev:
+            next_pos = (pos + 1) % len(wig)
+        else: 
+            next_pos = (pos - 1) % len(wig)
 
         return wig[next_pos]
 
