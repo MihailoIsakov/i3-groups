@@ -1,4 +1,5 @@
 import subprocess
+import i3
 
 from .util import _bash
 from .workspace import Workspace, SHARED_GROUP, WSList
@@ -55,4 +56,25 @@ def new_workspace():
 
     Workspace.new_workspace(active_group, name)
 
+
+def polybar():
+    def print_ws(event, data, subscription):
+        active_group = WSList().focused.group
+        wsl = WSList().in_groups([active_group])
+
+        output = "  "
+        for w in wsl:
+            if w.focused: 
+                output += "%{F#F0C674}" + str(w) + "%{F-}"
+            else:
+                output += "%{F#C5C8C6}" + str(w) + "%{F-}"
+        
+            output += " | "
+
+        try: 
+            print(output[:-3], flush=True)
+        except:
+            print(output, flush=True)
+
+    subscription = i3.Subscription(print_ws, 'workspace')
 

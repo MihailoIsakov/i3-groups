@@ -44,6 +44,7 @@ setuptools.setup(
             'move-container-to-ws = i3_groups.commands:move_container_to_workspace',
             'change-active-group  = i3_groups.commands:change_group',
             'make-workspace       = i3_groups.commands:new_workspace',
+            'i3-groups-polybar    = i3_groups.commands:polybar',
         ]
     }
 )
