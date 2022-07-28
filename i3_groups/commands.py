@@ -63,16 +63,32 @@ def new_workspace():
 
 
 def polybar():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--monitor', type=str, default=None) 
+    args = parser.parse_args()
+
+    def wrap(text, fc=None, bc=None):
+        if fc is not None: 
+            text = "%{F" + fc +  "}" + text + "%{F-}"
+        if bc is not None: 
+            text = "%{B" + bc +  "}" + text + "%{B-}"
+
+        return text
+
     def print_ws(event, data, subscription):
         active_group = WSList().focused.group
         wsl = WSList().in_groups([active_group])
-
-        output = "  "
+        
+        if args.monitor is not None: 
+            wsl = wsl.on_output(args.monitor)
+        
+        c1, c2  = u"\uE0B6", u"\uE0B4"
+        output = "  " + wrap(active_group + ":" , bc="#282A2E", fc="#F0C674") + "  " 
         for w in wsl:
-            if w.focused: 
-                output += "%{F#F0C674}" + str(w) + "%{F-}"
+            if w.visible: 
+                output += wrap(" " + w.name + " ", fc="#282A2E", bc="#F0C674")
             else:
-                output += "%{F#C5C8C6}" + str(w) + "%{F-}"
+                output += wrap(" " + w.name + " ", fc="#C5C8C6")
         
             output += " | "
 
