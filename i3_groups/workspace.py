@@ -8,7 +8,6 @@ from .util import _bash
 
 
 DELIMITER = ":"
-SHARED_GROUP = "shared"
 
 
 @dataclass
@@ -45,7 +44,7 @@ class Workspace():
             self.group = self.name.split(DELIMITER)[0].strip()
             self.name  = ("".join(self.name.split(DELIMITER)[1:])).strip()  
         else:
-            self.group = SHARED_GROUP 
+            self.group = "" 
             self.name  = self.name
 
     def __str__(self) -> str:
@@ -102,8 +101,6 @@ class WSList():
     @property
     def groups(self) -> list[str]:
         gs = list(set([w.group for w in self._list]))
-        if SHARED_GROUP not in gs:
-            gs = [SHARED_GROUP] + gs
 
         return gs
 
@@ -122,7 +119,7 @@ class WSList():
         Finds smallest number that is not used in the group
         """
         names = [w.name for w in self]
-        for i in range(100):
+        for i in range(1, 100):
             if str(i) not in names:
                 return str(i)
 
