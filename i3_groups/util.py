@@ -27,6 +27,7 @@ def get_ws_from_name(name: str) -> str:
 
 
 def _bash(command: list[str]):
+    command = [c.encode('utf-8') for c in command]
     process = subprocess.Popen(command, stdout=subprocess.PIPE)
     output, error = process.communicate()
 
