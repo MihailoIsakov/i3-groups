@@ -38,12 +38,13 @@ setuptools.setup(
     },
     entry_points={
         'console_scripts': [
+            'make-workspace       = i3_groups.commands:new_workspace',
             'rename-workspace     = i3_groups.commands:rename_workspace',
+            'move-container-to-ws = i3_groups.commands:move_container_to_workspace',
             'move-ws-to-group     = i3_groups.commands:move_workspace_to_group',
             'next-ws-in-group     = i3_groups.commands:goto_next_workspace_in_group',
-            'move-container-to-ws = i3_groups.commands:move_container_to_workspace',
             'change-active-group  = i3_groups.commands:change_group',
-            'make-workspace       = i3_groups.commands:new_workspace',
+            'goto-shared-ws       = i3_groups.commands:goto_special_workspace',
             'i3-groups-polybar    = i3_groups.commands:polybar',
         ]
     }

@@ -1,10 +1,21 @@
-import subprocess
-import i3
 import argparse
+import i3
 
-from .util import _bash
-from .workspace import Workspace, WSList
+from .manager import WsManager, _bash
+from .workspace import Workspace
 from .console_inputs import get_text, get_option
+
+
+SHARED = 'shared'
+
+
+def new_workspace():
+    """
+    Creates a new workspace and changes focus to it.
+    """
+    mgr = WsManager()
+    mgr.new_workspace()
+    mgr.update_ordering()
 
 
 def rename_workspace():
@@ -17,16 +28,57 @@ def rename_workspace():
     else:
         name = get_text("Rename workspace")
 
-    if name is not None: 
-        WSList().focused.rename(name)
+    mgr = WsManager()
+    mgr.focused.change_name(name)
+
+
+def move_container_to_workspace():
+    mgr = WsManager()
+
+    # put workspaces from the active group first
+    # wss = [str(ws) for ws in mgr.workspaces if ws.group == mgr.active_group] + \
+          # [str(ws) for ws in mgr.workspaces if ws.group != mgr.active_group]
+    # wss = list(set(mgr.filter_workspaces(group=mgr.active_group) + mgr.workspaces))
+    wss = mgr.sort(mgr.workspaces)
+
+    chosen_ws = get_option("Move to workspace", [str(w) for w in wss])
+
+    if chosen_ws is None: 
+        return 
+
+    return _bash(f"i3-msg move container to workspace {chosen_ws}".split())
 
 
 def move_workspace_to_group():
-    wsl = WSList()
-    new_group = get_option("Move to group", wsl.groups)
+    mgr = WsManager()
+    new_group = get_option("Move to group", mgr.groups)
 
     if new_group is not None:
-        wsl.focused.change_group(new_group)
+        mgr.focused.change_group(new_group)
+        mgr.update_ordering()
+
+
+def change_group():
+    """
+    Changes active group and switches all monitors to workspaces in that group 
+    with a matching monitor.
+    """
+    mgr = WsManager()
+    group = get_option("Change to group", mgr.groups)
+
+    if group is None:
+        return
+
+    mgr.active_group = group
+
+    for output in mgr.outputs:
+        ws = mgr.next_workspace(group=group, output=output)
+        if ws is not None:
+            ws.focus()
+        else:
+            mgr.new_workspace(group=group, output=output)
+
+        mgr.update_ordering()
 
 
 def goto_next_workspace_in_group():
@@ -34,47 +86,27 @@ def goto_next_workspace_in_group():
     parser.add_argument('-p', '--prev', action='store_true', default=False)
     args = parser.parse_args()
 
-    wsl = WSList()
-    wsl.next_ws(wsl.focused, args.prev).focus_on()
+    mgr = WsManager()
+    offset = 1 if not args.prev else -1
+    mgr.next_workspace(mgr.focused, offset=offset).focus()
+    mgr.update_ordering()
+        
 
+def goto_special_workspace():
+    """
+    Switches to a special workspace outside of the group (e.g., a browser or note app).
 
-def move_container_to_workspace():
-    wsl = WSList()
+    Temporarily adds the special workspace to the group so that goto_next_workspace_in_group still works.
+    After the special workspace is left, it is removed from the group.
+    Special workspaces are named f'{SHARED}:{key}' when they are not focused, and as
+    f'{active_group}:{SHARED}_{key}' when they are focused.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-k', '--key', type=str, default=None)
+    args = parser.parse_args()
 
-    # put workspaces from the active group first
-    wss = [str(ws) for ws in wsl if ws.group == wsl.focused.group] + \
-          [str(ws) for ws in wsl if ws.group != wsl.focused.group]
-
-    chosen_ws = get_option("Move to workspace", wss)
-
-    if chosen_ws is not None: 
-        return _bash(f"i3-msg move container to workspace {chosen_ws}".split())
-
-
-def change_group():
-    group = get_option("Change to group", WSList().groups)
-    
-    if group is None:
-        return
-
-    for output in WSList().outputs:
-        wsl = WSList().in_groups([group]).on_output(output)
-        if len(wsl) == 0:
-            print(f"Did not find existing workspaces in group {group} on output {output}")
-            ws_name = WSList().get_valid_name(group)
-            print(f"Making workspace {ws_name} on output {output}")
-            Workspace.new_workspace_on_output(group, ws_name, output) 
-        else:
-            print(f"Focusing on {wsl[0].name}:{wsl[0].name}")
-            wsl[0].focus_on() 
-
-
-def new_workspace():
-    # name = get_text("Workspace name")
-    active_group = WSList().focused.group
-    name = WSList().get_valid_name(active_group)
-
-    Workspace.new_workspace(active_group, name)
+    mgr = WsManager()
+    mgr.new_workspace(name=args.key, group=SHARED)
 
 
 def polybar():
@@ -91,16 +123,16 @@ def polybar():
         return text
 
     def print_ws(event, data, subscription):
-        active_group = WSList().focused.group
-        groups_wsl = WSList()
+        # active_group = WSList().focused.group
+        mgr = WsManager()
 
-        wsl = WSList().in_groups([active_group])
+        wsl = mgr.filter_workspaces(group=mgr.active_group)
         if args.monitor is not None:
             wsl = wsl.on_output(args.monitor)
         
         output = " "
-        for g in groups_wsl.groups:
-            if g in groups_wsl.active_groups:
+        for g in mgr.groups:
+            if g in mgr.active_group:
                 output += wrap(g, bc="#282A2E", fc="#F0C674") + " / "
             else:
                 output += wrap(g, bc="#282A2E", fc="#666666") + " / "
