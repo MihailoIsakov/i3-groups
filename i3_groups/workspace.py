@@ -45,6 +45,9 @@ class Workspace():
     def __str__(self) -> str:
         return self.make_name(self.group, self.name)
 
+    def __repr__(self) -> str:
+        return f"Workspace(group={self.group}, name={self.name})"
+
     """
     Commands sent to i3-msg.
     """

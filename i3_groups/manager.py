@@ -9,7 +9,7 @@ from .workspace import Workspace
 
 
 SHARED = "shared"
-WAIT = 5
+WAIT = 1
 
 
 class Group(str):
@@ -19,6 +19,52 @@ class Group(str):
 class Output(str):
     pass
 
+
+class WsStore():
+    def __init__(self, db_path, mgr: 'WsManager'):
+        """
+        Checks whether all dictionary elements are initialized and creates
+        them if not.
+        """
+        self.db_path = db_path
+        self.mgr     = mgr
+
+        with shelve.open(self.db_path, writeback=True) as db:
+            if 'active_group' not in db:
+                db['active_group'] = SHARED
+            if 'order' not in db:
+                db['order'] = []
+
+    @property
+    def active_group(self) -> str:
+        with shelve.open(self.db_path, writeback=True) as db:
+            return db['active_group']
+
+    @active_group.setter
+    def active_group(self, new_group: Group) -> None:
+        with shelve.open(self.db_path, writeback=True) as db:
+            db['active_group'] = new_group
+
+    @property
+    def order(self):
+        # clean up order on every run
+        with shelve.open(self.db_path, writeback=True) as db:
+            print(f"Order: {db['order']}")
+            for w in db['order']:
+                if w not in self.mgr.workspaces:
+                    db['order'].remove(w)
+
+            return db['order']
+
+    def push_ws(self, ws: Workspace) -> None:
+        print('push')
+        with shelve.open(self.db_path, writeback=True) as db:
+            print('check')
+            if ws in db['order']:
+                print('is inside')
+                db['order'].remove(ws)
+            db['order'].insert(0, ws)
+                
 
 class WsManager():
     """
@@ -33,20 +79,7 @@ class WsManager():
     Note: After updates to the tree, the WsManager data is outdated.
     """
     def __init__(self, db_path='/tmp/i3_groups.pkl'):
-        self.db_path = db_path
-        self.populate_store()
-
-    def populate_store(self) -> None:
-        """
-        Checks whether all dictionary elements are initialized and creates
-        them if not.
-        """
-        with shelve.open(self.db_path) as db:
-            if 'active_group' not in db:
-                db['active_group'] = SHARED
-
-            if 'order' not in db:
-                db['order'] = []
+        self.store = WsStore(db_path, mgr=self)
 
     def update_ordering(self):
         """
@@ -56,11 +89,8 @@ class WsManager():
         old_ws = self.focused 
         time.sleep(WAIT)
 
-        with shelve.open(self.db_path) as db:
-            if old_ws == self.focused:
-                if old_ws in db['order']: 
-                    db['order'].remove(old_ws)
-                db['order'].insert(0, old_ws)
+        if old_ws == self.focused:
+            self.store.push_ws(old_ws)
 
     @property
     def workspaces(self, group: Group = None, output: Output = None) -> list[Workspace]:
@@ -87,23 +117,15 @@ class WsManager():
 
     @property
     def active_group(self) -> str:
-        with shelve.open(self.db_path) as db:
-            return db['active_group']
+        self.store.active_group
 
     @active_group.setter
     def active_group(self, new_group: Group) -> None:
-        with shelve.open(self.db_path) as db:
-            db['active_group'] = new_group
+        self.store.active_group = new_group
 
     @property
     def order(self) -> list[Workspace]:
-        # clean up order on every run
-        with shelve.open(self.db_path) as db:
-            for w in db['order']:
-                if w not in self.workspaces:
-                    self.order.remove(w)
-
-            return db['order']
+        return self.store.order
 
     @property
     def focused(self) -> Workspace:
@@ -129,9 +151,9 @@ class WsManager():
         """
         Given a list of workspaces, sorts them by the current order.
         """
-        with shelve.open(self.db_path) as db:
-            order  = [ws for ws in db['order'] if ws in wslist]
-            order += [ws for ws in wslist if ws not in order]
+        order  = self.order
+        order  = [ws for ws in order if ws in wslist]
+        order += [ws for ws in wslist if ws not in order]
 
         assert len(order) == len(wslist)
 
