@@ -1,3 +1,4 @@
+import os
 import subprocess
 import i3
 import argparse
@@ -81,6 +82,9 @@ def polybar():
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', '--monitor', type=str, default=None) 
     args = parser.parse_args()
+
+    if args.monitor is None:
+        args.monitor = os.environ.get("MONITOR")
 
     def wrap(text, fc=None, bc=None):
         if fc is not None: 
