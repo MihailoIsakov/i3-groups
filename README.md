@@ -1,28 +1,29 @@
 # i3gem: an i3wm Grouping Manager
 
 When working on multiple projects, you may find that you have tens
-of workspaces over multiple monitors. Switching between projects 
-requires moving to all of the monitors and 
+of workspaces over multiple monitors. Switching between projects
+requires moving to all of the monitors and
 
-i3-groups lets you group workspaces and cycle between workspaces 
-within a group. 
+i3-groups lets you group workspaces and cycle between workspaces
+within a group.
 
 # Concepts:
-At all times there exists an active group, and all monitors show workspaces from the same group. 
+At all times there exists an active group, and all monitors show workspaces from the same group.
 Changing the group switches the workspace on all monitors to that group.
 
 # Installation
 ```
+uv tool install git+https://github.com/MihailoIsakov/i3-groups
 ```
 
 # Commands:
-`make-workspace`: Creates a new workspace in this group and changes focus to it. 
+`make-workspace`: Creates a new workspace in this group and changes focus to it.
 
-`rename-workspace`: Changes the name of the focused workspace. Opens a rofi menu if no name is passed.    
+`rename-workspace`: Changes the name of the focused workspace. Opens a rofi menu if no name is passed.
 
 `move-container-to-ws`: Moves container to specified workspace and group, but keeps focus on current workspace.
 
-`move-ws-to-group`: Moves workspace (and all containers in it) 
+`move-ws-to-group`: Moves workspace (and all containers in it)
 to a chosen group, but keeps focus on the workspace.
 
 `change-active-group`: Changes active group, forces all monitors to select a workspace from that group with a matching
@@ -33,7 +34,7 @@ workspace, puts the new workspace at the top of the workspace order.
 
 `goto-special-workspace()`: Focuses on one of the special workspaces that have a
 group named `shared`. The active group and the workspace order are not modified.
-Switching to the next workspace will ignore shared workspaces. 
+Switching to the next workspace will ignore shared workspaces.
 
 `i3-groups-polybar`: Serves as a replacement for Polybar's i3 module.
 Outputs text that can be fed into a polybar script module shown
@@ -42,7 +43,7 @@ group. Highlights active group and focused workspace.
 
 
 # Example i3 config
-bindsym $mod+n       exec next-ws-in-group    
+bindsym $mod+n       exec next-ws-in-group
 bindsym $mod+p       exec next-ws-in-group --prev
 bindsym $mod+r       exec rename-workspace
 bindsym $mod+Shift+r exec move-container-to-ws
